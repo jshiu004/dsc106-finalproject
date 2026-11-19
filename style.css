@@ -290,3 +290,8 @@ body { background: linear-gradient(135deg, #1c100e 0%, #2b1510 48%, #451b12 100%
   .hero .hero-deck, .finding strong, .takeaway > p:last-child { color: #351b16; }
   .takeaway { background: white; }
 }
+
+/* Curved world silhouette; all land and ocean values remain visible. */
+.equal-earth-frame { background: #2b1712; border-radius: 4px; overflow: hidden; }
+.map-frame .sphere-outline { fill: none; stroke: #d0a887; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.equal-earth-frame .band-highlight { stroke: #58271a; stroke-width: 1.75; }

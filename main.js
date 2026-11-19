@@ -46,6 +46,142 @@
   tooltip.setAttribute('role', 'tooltip');
   document.body.append(tooltip);
 
+  function createWorldMap(countries) {
+    const width = 960, height = 500;
+    const host = d3.select('#warming-map');
+    host.selectAll('*').remove();
+    const frame = host.append('div').attr('class', 'map-frame equal-earth-frame');
+    const canvas = frame.append('canvas').attr('width', width).attr('height', height)
+      .attr('role', 'img');
+    const context = canvas.node().getContext('2d');
+    const projection = d3.geoEqualEarth().fitExtent([[12, 10], [width - 12, height - 10]], { type: 'Sphere' });
+    const path = d3.geoPath(projection);
+    const spherePath = path({ type: 'Sphere' });
+    const sphere = new Path2D(spherePath);
+    const overlay = frame.append('svg').attr('viewBox', `0 0 ${width} ${height}`).attr('aria-hidden', 'true');
+    overlay.append('defs').append('clipPath').attr('id', 'world-sphere-clip').append('path').attr('d', spherePath);
+    const globe = overlay.append('g').attr('clip-path', 'url(#world-sphere-clip)');
+    globe.append('path').datum(d3.geoGraticule().step([30, 30])()).attr('class', 'map-graticule').attr('d', path);
+    globe.append('path').datum(topojson.mesh(countries, countries.objects.countries)).attr('class', 'map-outline').attr('d', path);
+    const masks = globe.append('g');
+    const highlight = globe.append('path').attr('class', 'band-highlight').attr('visibility', 'hidden');
+    overlay.append('path').attr('d', spherePath).attr('class', 'sphere-outline');
+
+    // Equal Earth parallels are horizontal. Precompute each screen pixel's original
+    // grid cell once, sampling the inverse projection at the pixel center.
+    const columns = grid.grid.longitudes.length;
+    const rows = grid.grid.latitudes.length;
+    const cellIndices = new Int32Array(width * height).fill(-1);
+    const top = projection([0, 90])[1], bottom = projection([0, -90])[1];
+    for (let py = 0; py < height; py++) {
+      const sy = py + .5;
+      if (sy < top || sy > bottom) continue;
+      const latitude = projection.invert([width / 2, sy])[1];
+      const left = projection([-180, latitude])[0], right = projection([180, latitude])[0];
+      const row = Math.min(rows - 1, Math.floor((latitude + 90) / 1.25));
+      for (let px = Math.max(0, Math.ceil(left - .5)); px < Math.min(width, right - .5); px++) {
+        const longitude = (px + .5 - left) / (right - left) * 360 - 180;
+        const col = Math.min(columns - 1, Math.floor((longitude + 180) / 1.875));
+        cellIndices[py * width + px] = row * columns + col;
+      }
+    }
+
+    // Trace parallels and curved outer meridians, avoiding spherical polygon
+    // orientation and antimeridian ambiguity for a full-width latitude band.
+    function bandPath(lower, upper) {
+      const shape = d3.path();
+      const point = coordinates => projection(coordinates);
+      shape.moveTo(...point([-180, upper]));
+      shape.lineTo(...point([180, upper]));
+      for (let latitude = upper; latitude > lower; latitude -= .5) shape.lineTo(...point([180, latitude]));
+      shape.lineTo(...point([180, lower]));
+      shape.lineTo(...point([-180, lower]));
+      for (let latitude = lower; latitude < upper; latitude += .5) shape.lineTo(...point([-180, latitude]));
+      shape.closePath();
+      return shape.toString();
+    }
+
+    const cache = new Map();
+    let currentSeason = null, currentLayer = null, animation = null;
+    function seasonLayer(season) {
+      if (cache.has(season)) return cache.get(season);
+      const layer = document.createElement('canvas');
+      layer.width = width; layer.height = height;
+      const draw = layer.getContext('2d');
+      const pixels = draw.createImageData(width, height);
+      const palette = grid.warming[season].map(value => d3.rgb(color(value)));
+      for (let pixel = 0; pixel < cellIndices.length; pixel++) {
+        const index = cellIndices[pixel];
+        if (index < 0) continue;
+        const rgb = palette[index];
+        const offset = pixel * 4;
+        pixels.data[offset] = rgb.r; pixels.data[offset + 1] = rgb.g;
+        pixels.data[offset + 2] = rgb.b; pixels.data[offset + 3] = 255;
+      }
+      draw.putImageData(pixels, 0, 0);
+      cache.set(season, layer);
+      return layer;
+    }
+
+    function update(season, region = 'global') {
+      tooltip.hidden = true;
+      if (season !== currentSeason) {
+        animation?.stop();
+        const previous = currentLayer;
+        currentLayer = seasonLayer(season);
+        const paint = fraction => {
+          context.clearRect(0, 0, width, height);
+          if (previous && fraction < 1) context.drawImage(previous, 0, 0);
+          context.globalAlpha = fraction;
+          context.drawImage(currentLayer, 0, 0);
+          context.globalAlpha = 1;
+        };
+        if (previous && !reducedMotion.matches) {
+          animation = d3.timer(elapsed => {
+            const fraction = Math.min(1, elapsed / 350);
+            paint(d3.easeCubicInOut(fraction));
+            if (fraction === 1) { animation.stop(); animation = null; }
+          });
+        } else paint(1);
+        currentSeason = season;
+      }
+      const band = summary.bands.find(d => d.id === region);
+      const shaded = band ? [[-90, band.latitude_min], [band.latitude_max, 90]].filter(([lo, hi]) => hi > lo) : [];
+      masks.selectAll('path').data(shaded).join('path').attr('class', 'outside-band').attr('d', ([lo, hi]) => bandPath(lo, hi));
+      highlight.attr('visibility', band ? 'visible' : 'hidden').attr('d', band ? bandPath(band.latitude_min, band.latitude_max) : null);
+      canvas.attr('aria-label', `Equal Earth world map: ${seasons[season]} projected warming, 2081–2100 relative to 1995–2014. Land and ocean. Fixed scale 0 to ${colorMax}°C.${band ? ` Highlighted band: ${band.label}.` : ''} Use the latitude selector for a keyboard alternative.`);
+    }
+
+    function locate(event) {
+      const rect = canvas.node().getBoundingClientRect();
+      const px = (event.clientX - rect.left) * width / rect.width;
+      const py = (event.clientY - rect.top) * height / rect.height;
+      if (!context.isPointInPath(sphere, px, py)) return null;
+      const [longitude, latitude] = projection.invert([px, py]);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || Math.abs(longitude) > 180 || Math.abs(latitude) > 90) return null;
+      const row = Math.min(rows - 1, Math.max(0, Math.floor((latitude + 90) / 1.25)));
+      const col = Math.min(columns - 1, Math.max(0, Math.floor((longitude + 180) / 1.875)));
+      return { row, col, latitude };
+    }
+    canvas.on('pointermove', event => {
+      const cell = locate(event);
+      if (!cell || event.pointerType === 'touch') { tooltip.hidden = true; return; }
+      const latitude = grid.grid.latitudes[cell.row], longitude = grid.grid.longitudes[cell.col];
+      const value = grid.warming[currentSeason][cell.row * columns + cell.col];
+      tooltip.textContent = `${Math.abs(latitude).toFixed(2)}°${latitude < 0 ? 'S' : 'N'}, ${Math.abs(longitude).toFixed(2)}°${longitude < 0 ? 'W' : 'E'} · ${seasons[currentSeason]}: +${value.toFixed(2)}°C`;
+      tooltip.hidden = false;
+      tooltip.style.left = `${Math.max(8, Math.min(event.clientX + 14, innerWidth - tooltip.offsetWidth - 8))}px`;
+      tooltip.style.top = `${Math.max(8, Math.min(event.clientY + 14, innerHeight - tooltip.offsetHeight - 8))}px`;
+    }).on('pointerleave', () => { tooltip.hidden = true; });
+    canvas.on('click', event => {
+      const cell = locate(event);
+      if (!cell) return;
+      const band = summary.bands.find(d => cell.latitude >= d.latitude_min && cell.latitude < d.latitude_max);
+      if (band) explore({ region: band.id });
+    });
+    return { update };
+  }
+
   function createMap(selector, bounds, countries, states) {
     const [west, east, south, north] = bounds;
     const width = 960;
@@ -286,7 +422,7 @@
     chartMax = Math.ceil(d3.max(summary.bands, band => d3.max(Object.values(band.warming))) / 2) * 2;
     d3.select('#region-select').selectAll('option').data([{ id: 'global', label: 'All latitudes' }, ...[...summary.bands].reverse()], d => d?.id)
       .join('option').attr('value', d => d.id).text(d => d.label);
-    worldMap = createMap('#warming-map', [-180, 180, -90, 90], countries);
+    worldMap = createWorldMap(countries);
     usMap = createMap('#us-map', [-125, -66, 24, 50], countries, states);
     addLegend('#warming-legend'); addLegend('#us-legend');
     createChart();
