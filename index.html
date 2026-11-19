@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore what a global average hides: regional and seasonal differences in projected warming from ACCESS-CM2 under SSP2-4.5.">
+  <meta name="color-scheme" content="light">
+  <title>Beyond the Average | Regional &amp; Seasonal Warming</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="vendor/d3.min.js"></script>
+  <script defer src="vendor/topojson-client.min.js"></script>
+  <script defer src="vendor/scrollama.min.js"></script>
+  <script defer src="main.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the story</a>
+
+  <header class="site-header">
+    <a class="wordmark" href="#top">Beyond the Average</a>
+    <nav aria-label="Story navigation">
+      <a href="#explore">The world</a>
+      <a href="#seasons">The seasons</a>
+      <a href="#united-states">The US</a>
+      <a href="#methods">The data</a>
+    </nav>
+    <span class="project-label">DSC 106 · Initial prototype</span>
+  </header>
+
+  <main id="main-content">
+    <section class="hero section" id="top" aria-labelledby="hero-title">
+      <p class="eyebrow">One planet. Uneven warming.</p>
+      <h1 id="hero-title">What does a global average hide?</h1>
+      <p class="hero-deck">A single number describes a warming world. But it cannot tell us
+        which regions warm most, or how that warming changes with the season.</p>
+      <p class="hero-context">Explore a simulated future through one climate model:
+        ACCESS-CM2 under SSP2-4.5, comparing 2081–2100 with 1995–2014.</p>
+      <a class="button-link" href="#explore">Explore the differences</a>
+
+      <dl class="key-findings" aria-label="Key annual warming results">
+        <div class="finding">
+          <dt>Global average</dt>
+          <dd><strong>+2.80°C</strong><span>Projected annual warming</span></dd>
+        </div>
+        <div class="finding">
+          <dt>Northern high latitudes</dt>
+          <dd><strong>+6.01°C</strong><span>Annual average across 60–90°N</span></dd>
+        </div>
+        <div class="finding">
+          <dt>A different scale of change</dt>
+          <dd><strong>2.14×</strong><span>Northern high latitude warming relative to the global average</span></dd>
+        </div>
+      </dl>
+      <p class="data-note">All values compare the same two 20-year periods and include land and ocean.
+        These are changes from 1995–2014, not from a preindustrial baseline.</p>
+    </section>
+
+    <section class="section exploration" id="explore" aria-labelledby="explore-title">
+      <header class="section-heading">
+        <p class="eyebrow">Start with the world</p>
+        <h2 id="explore-title">The same future looks different from every latitude.</h2>
+        <p>The global average combines places with very different projected changes.
+          Follow the guided comparison, then use the linked map and chart to explore those differences yourself.</p>
+      </header>
+
+      <p class="story-instructions">Scroll to follow the story, or use the controls to explore your own comparison.</p>
+      <noscript><p class="prototype-status">JavaScript is needed for the interactive charts. The seasonal data table below remains available.</p></noscript>
+      <div class="scrolly" id="warming-story">
+        <div class="story-copy" aria-label="Guided warming story">
+          <div class="story-navigation" aria-label="Story controls">
+            <button type="button" id="previous-step" disabled>Previous</button>
+            <span id="step-counter">Story 1 of 5</span>
+            <button type="button" id="next-step" disabled>Next</button>
+          </div>
+          <article class="story-step is-active" id="story-global" data-step="0">
+            <p class="eyebrow">The global picture</p>
+            <h3>A world that warms by +2.80°C.</h3>
+            <p>That is the annual global average in this simulation. Start with the full map:
+              the colors show how much each location warms relative to 1995–2014.</p>
+            <button class="step-button" type="button" data-show-step="0" disabled>Show the global view</button>
+          </article>
+          <article class="story-step" id="story-north" data-step="1">
+            <p class="eyebrow">A hidden contrast</p>
+            <h3>But the north warms more than twice as much.</h3>
+            <p>Across 60–90°N, annual warming averages +6.01°C. Follow the highlighted band
+              across the map and compare its bar with the global reference line.</p>
+            <button class="step-button" type="button" data-show-step="1" disabled>Highlight the north</button>
+          </article>
+          <article class="story-step" id="story-djf" data-step="2">
+            <p class="eyebrow">Change the months</p>
+            <h3>In December–February, the contrast grows.</h3>
+            <p>The northern high latitude average reaches +9.24°C. The map now shows
+              December–February warming, using the same color scale as before.</p>
+            <button class="step-button" type="button" data-show-step="2" disabled>Compare December–February</button>
+          </article>
+          <article class="story-step" id="story-jja" data-step="3">
+            <p class="eyebrow">Same region, different season</p>
+            <h3>June–August tells a different story.</h3>
+            <p>The same northern band warms by +3.23°C in June–August. That is still warming,
+              but much less than in December–February. These are seasonal averages, not successive future dates.</p>
+            <button class="step-button" type="button" data-show-step="3" disabled>Compare June–August</button>
+          </article>
+          <article class="story-step" id="story-free" data-step="4">
+            <p class="eyebrow">Your turn</p>
+            <h3>What does the average hide where you look?</h3>
+            <p>Choose a season and latitude band, or select a bar or a location on the map.
+              Compare regions against the global average, then continue to the US view below.</p>
+            <button class="step-button" type="button" data-show-step="4" disabled>Explore freely</button>
+          </article>
+        </div>
+
+        <div class="story-visual" id="story-visual" aria-label="Linked warming explorer">
+          <div class="explorer-toolbar">
+            <div class="control">
+              <label for="season-select">Months</label>
+              <select id="season-select" disabled>
+                <option value="annual">Annual average</option>
+                <option value="DJF">December–February</option>
+                <option value="MAM">March–May</option>
+                <option value="JJA">June–August</option>
+                <option value="SON">September–November</option>
+              </select>
+            </div>
+            <div class="control">
+              <label for="region-select">Latitude band</label>
+              <select id="region-select" disabled><option value="global">All latitudes</option></select>
+            </div>
+            <button type="button" id="resume-story" class="text-button" hidden>Resume story</button>
+          </div>
+          <p id="explorer-status" class="explorer-status" role="status" aria-live="polite">Loading the warming explorer…</p>
+          <div class="linked-views">
+            <figure class="visual-panel" aria-labelledby="map-title">
+              <h3 id="map-title">Projected warming · <span id="map-season">Annual average</span></h3>
+              <div id="warming-map" class="chart-container" aria-describedby="map-caption">
+                <p class="chart-placeholder">Loading global warming data…</p>
+              </div>
+              <div id="warming-legend" class="chart-legend" aria-label="Temperature change legend"></div>
+              <figcaption id="map-caption">2081–2100 minus 1995–2014 · Land and ocean · Grid: 1.25° × 1.875°</figcaption>
+            </figure>
+            <figure class="visual-panel" aria-labelledby="latitude-title">
+              <h3 id="latitude-title">Compare latitudes</h3>
+              <div id="latitude-chart" class="chart-container" aria-describedby="latitude-caption">
+                <p class="chart-placeholder">Loading latitude-band comparisons…</p>
+              </div>
+              <figcaption id="latitude-caption">Area-weighted means · Dashed line: global average for the selected months</figcaption>
+            </figure>
+          </div>
+          <p id="selection-summary" class="selection-summary" aria-live="polite"></p>
+          <p class="map-help">Select a bar or map location to highlight its latitude band. Hover over the map for grid-cell values.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="seasons" aria-labelledby="seasons-title">
+      <header class="section-heading">
+        <p class="eyebrow">Then change the months</p>
+        <h2 id="seasons-title">Where matters. So does when.</h2>
+        <p>Across 60–90°N, projected warming reaches +9.24°C in December–February,
+          compared with +3.23°C in June–August. The same region has a different story across the year.</p>
+      </header>
+
+      <div class="table-container" tabindex="0" role="region" aria-labelledby="season-table-caption">
+        <table id="seasonal-summary">
+          <caption id="season-table-caption">Projected warming by latitude and season (°C),
+            2081–2100 relative to 1995–2014</caption>
+          <thead>
+            <tr>
+              <th scope="col">Latitude band</th>
+              <th scope="col">Annual</th>
+              <th scope="col">Dec–Feb</th>
+              <th scope="col">Mar–May</th>
+              <th scope="col">Jun–Aug</th>
+              <th scope="col">Sep–Nov</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Values reproduced from data/latitude-bands.json; regenerate if the data changes. -->
+            <tr><th scope="row">60°N–90°N</th><td>6.01</td><td>9.24</td><td>4.58</td><td>3.23</td><td>7.03</td></tr>
+            <tr><th scope="row">30°N–60°N</th><td>3.46</td><td>3.48</td><td>2.90</td><td>3.78</td><td>3.68</td></tr>
+            <tr><th scope="row">0°–30°N</th><td>2.62</td><td>2.64</td><td>2.59</td><td>2.63</td><td>2.63</td></tr>
+            <tr><th scope="row">30°S–0°</th><td>2.30</td><td>2.28</td><td>2.35</td><td>2.30</td><td>2.28</td></tr>
+            <tr><th scope="row">60°S–30°S</th><td>1.95</td><td>1.99</td><td>2.04</td><td>1.90</td><td>1.86</td></tr>
+            <tr><th scope="row">90°S–60°S</th><td>2.68</td><td>2.08</td><td>2.72</td><td>3.74</td><td>2.16</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><th scope="row">Global average</th><td>2.80</td><td>2.99</td><td>2.63</td><td>2.74</td><td>2.86</td></tr>
+          </tfoot>
+        </table>
+      </div>
+      <p class="data-note">Band averages include land and ocean, weighted by area.
+        Seasonal averages are weighted by the number of days in each month.</p>
+    </section>
+
+    <section class="section" id="united-states" aria-labelledby="us-title">
+      <header class="section-heading">
+        <p class="eyebrow">Bring the pattern closer</p>
+        <h2 id="us-title">A closer look at the contiguous United States.</h2>
+        <p>A latitude band still combines many different places. Compare seasonal warming within
+          the contiguous US area using the same color scale as the global map.</p>
+      </header>
+      <div class="control us-control">
+        <label for="us-season-select">Compare months in the US view</label>
+        <select id="us-season-select" disabled>
+          <option value="annual">Annual average</option><option value="DJF">December–February</option>
+          <option value="MAM">March–May</option><option value="JJA">June–August</option><option value="SON">September–November</option>
+        </select>
+      </div>
+      <figure class="visual-panel" aria-labelledby="us-map-title">
+        <h3 id="us-map-title">Warming across the contiguous US area</h3>
+        <div id="us-map" class="chart-container">
+          <p class="chart-placeholder">Loading the regional warming map…</p>
+        </div>
+        <div id="us-legend" class="chart-legend" aria-label="US temperature change legend"></div>
+        <p id="us-summary" class="data-note" aria-live="polite"></p>
+        <figcaption>This geographic window includes nearby parts of Canada, Mexico, and the ocean.
+          Model grid cells are not state-level estimates.</figcaption>
+      </figure>
+    </section>
+
+    <section class="section" id="time-trends" aria-labelledby="time-title">
+      <header class="section-heading">
+        <p class="eyebrow">Follow the change over time</p>
+        <h2 id="time-title">How do regional warming trajectories diverge?</h2>
+        <p>The final story will compare regional time trends and let readers explore additional
+          time periods. This view is planned; the current map data compares the two fixed 20-year periods.</p>
+      </header>
+      <div id="trend-chart" class="chart-container">
+        <p class="chart-placeholder">Planned view: global, tropical, and northern high latitude warming
+          trajectories relative to each region’s 1995–2014 average.</p>
+      </div>
+    </section>
+
+    <section class="section takeaway" aria-labelledby="takeaway-title">
+      <p class="eyebrow">What the average leaves out</p>
+      <h2 id="takeaway-title">Warming is global. Its pattern is regional and seasonal.</h2>
+      <p>In this model and scenario, the global mean hides large differences between regions
+        and between seasons. Understanding that pattern starts with asking both
+        <em>where</em> and <em>when</em>.</p>
+    </section>
+
+    <section class="section methods" id="methods" aria-labelledby="methods-title">
+      <header class="section-heading">
+        <p class="eyebrow">Behind the numbers</p>
+        <h2 id="methods-title">One model. One possible future pathway.</h2>
+      </header>
+      <dl class="method-details">
+        <div><dt>Source</dt><dd>CMIP6 monthly near-surface air temperature (<code>tas</code>)</dd></div>
+        <div><dt>Model and realization</dt><dd>ACCESS-CM2 · <code>r1i1p1f1</code> · native grid</dd></div>
+        <div><dt>Experiments</dt><dd>Historical simulation and SSP2-4.5 future scenario</dd></div>
+        <div><dt>Comparison</dt><dd>2081–2100 average minus the 1995–2014 average</dd></div>
+        <div><dt>Calculation</dt><dd>Monthly temperatures weighted by days per month;
+          regional and global averages weighted by cosine of latitude</dd></div>
+      </dl>
+      <p>Twenty-year periods reduce the influence of individual unusually warm or cool years.
+        Seasonal results pool the indicated months within each period; December–February is a
+        climatological comparison, rather than a series of complete cross-year winters.
+        A temperature difference of one kelvin equals a difference of one degree Celsius.</p>
+      <p>These findings describe one model realization under one scenario. They do not provide
+        a range of model uncertainty, predict a specific future year, or describe every possible emissions pathway.</p>
+      <ul class="source-links">
+        <li><a href="https://storage.googleapis.com/cmip6/cmip6-zarr-consolidated-stores.csv">CMIP6 source catalog</a></li>
+        <li><a href="data/warming-grid.json">Map data and source metadata (JSON)</a></li>
+        <li><a href="data/latitude-bands.json">Latitude-band data and source metadata (JSON)</a></li>
+        <li>Boundaries: <a href="https://github.com/topojson/world-atlas">Natural Earth via world-atlas</a> and <a href="https://github.com/topojson/us-atlas">US Census via us-atlas</a>.</li>
+        <li><a href="https://github.com/jshiu004/dsc106-finalproject">Project repository and analysis notebook</a></li>
+      </ul>
+    </section>
+
+    <section class="section prototype-notes" id="prototype-notes" aria-labelledby="prototype-title">
+      <header class="section-heading">
+        <p class="eyebrow">Initial prototype · November 18, 2026</p>
+        <h2 id="prototype-title">Progress and design challenges</h2>
+      </header>
+      <article id="progress-writeup" aria-labelledby="progress-title">
+        <h3 id="progress-title">What have we done so far?</h3>
+        <p>We have selected ACCESS-CM2 monthly near-surface air temperature data for the historical simulation and SSP2-4.5 scenario.
+          We have calculated projected warming between our 1995–2014 baseline and 2081–2100 comparison period using month-length weighting.
+          Our notebook contains static global and US-area maps, latitude comparisons, regional time trends, and a seasonal heatmap.
+          We have exported annual and seasonal warming for every model grid cell, along with area-weighted latitude-band and global summaries, and checked them against the notebook results.
+          We have built a guided scrolling story with linked global and latitude views, seasonal controls, a US-area map, and a supporting data table, while time-period exploration remains planned.</p>
+      </article>
+      <article id="challenge-writeup" aria-labelledby="challenge-title">
+        <h3 id="challenge-title">What will be the most challenging part to design, and why?</h3>
+        <p>The most challenging part will be linking global, latitude-band, and US views so readers retain their geographic context as they explore.
+          A selected region must remain recognizable across maps and charts, even though each view summarizes the data differently.
+          Seasonal comparisons need a consistent color scale so a change in color reflects a change in warming rather than a rescaled legend.
+          Time-period controls will also need clear labels that distinguish long-term averages from individual years and preserve the historical baseline.
+          We will need to balance those interactions with concise annotations so readers discover what a global average hides without losing the main story.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Beyond the Average · DSC 106 Final Project · Initial prototype</p>
+    <a href="#top">Back to the beginning</a>
+  </footer>
+</body>
+</html>
